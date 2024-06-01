@@ -48,7 +48,6 @@ public class Main extends Application {
             directoryPathField.setText(selectedDirectory.getAbsolutePath());
         }
     }
-
     public static void main(String[] args) {
         launch(args);
     }
