@@ -10,6 +10,10 @@ import javafx.stage.DirectoryChooser;
 import javafx.stage.Stage;
 import java.io.File;
 import javafx.scene.control.TextArea;
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileReader;
+import java.io.IOException;
 
 public class Main extends Application {
     private TextField directoryPathField;
@@ -25,33 +29,26 @@ public class Main extends Application {
 
         searchField = new TextField();
         searchField.setPromptText("Enter search phrase");
-
-
-        resultArea = new TextArea();
-        resultArea.setPrefHeight(400);
-
-
         Button browseButton = new Button("Browse");
         browseButton.setOnAction(e -> browseDirectory());
-
-
         Button searchButton = new Button("Search");
         searchButton.setOnAction(e -> searchFiles());
 
-
         HBox hBox = new HBox(10, directoryPathField, browseButton);
-        VBox vBox = new VBox(10, hBox, searchField, searchButton, resultArea);
+        VBox vBox = new VBox(10, hBox, searchField, searchButton);
 
-
-        Scene scene = new Scene(vBox, 600, 600);
+        Scene scene = new Scene(vBox, 600, 200);
         primaryStage.setScene(scene);
         primaryStage.show();
+
+        resultArea = new TextArea();
+        resultArea.setPrefHeight(400);
     }
 
     private void browseDirectory() {
         DirectoryChooser directoryChooser = new DirectoryChooser();
-        File selectedDirectory = directoryChooser.showDialog(null);
 
+        File selectedDirectory = directoryChooser.showDialog(null);
         if (selectedDirectory != null) {
             directoryPathField.setText(selectedDirectory.getAbsolutePath());
         }
@@ -59,6 +56,8 @@ public class Main extends Application {
 
     private void searchFiles() {
         String directoryPath = directoryPathField.getText();
+        String searchPhrase = searchField.getText();
+
         if (directoryPath.isEmpty()) {
             resultArea.setText("Please provide a directory path.");
             return;
@@ -71,20 +70,36 @@ public class Main extends Application {
         }
 
         StringBuilder results = new StringBuilder();
-        listFilesInDirectory(directory, results);
+        searchInDirectory(directory, searchPhrase, results);
         resultArea.setText(results.toString());
     }
 
-    private void listFilesInDirectory(File directory, StringBuilder results) {
+    private void searchInDirectory(File directory, String searchPhrase, StringBuilder results) {
         File[] files = directory.listFiles();
         if (files != null) {
             for (File file : files) {
-                if (file.isFile()) {
+                if (file.isFile() && containsPhrase(file, searchPhrase)) {
                     results.append(file.getAbsolutePath()).append("\n");
                 }
             }
         }
     }
+
+    private boolean containsPhrase(File file, String searchPhrase) {
+        try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                if (line.contains(searchPhrase)) {
+                    return true;
+                }
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+            return false;
+        }
+        return false;
+    }
+
     public static void main(String[] args) {
         launch(args);
     }
